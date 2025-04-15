@@ -1,0 +1,244 @@
+:root {
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --background: #f0f2f5;
+    --text: #1f2937;
+    --surface: #ffffff;
+    --correct: #34a853;
+    --wrong: #d93025;
+    --radius: 12px;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: #0f172a;
+      --text: #f1f5f9;
+      --surface: #1e293b;
+    }
+  }
+  
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  body {
+    background: var(--background);
+    color: var(--text);
+    min-height: 100vh;
+    font-family: 'Inter', system-ui;
+    padding: 2rem;
+    line-height: 1.6;
+  }
+  
+  .header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    gap: 1rem;
+    max-width: 800px;
+    margin: 0 auto 2rem;
+  }
+  
+  .timer {
+    background: var(--primary);
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  #progressContainer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  #progressText {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+  }
+  #progressBar {
+    width: 100%;
+    background: #ddd;
+    border-radius: 6px;
+    overflow: hidden;
+    height: 10px;
+  }
+  #progressFill {
+    height: 100%;
+    background: var(--primary);
+    width: 0%;
+    transition: width 0.5s ease;
+  }
+  
+  .question {
+    font-size: 1.4rem;
+    margin-bottom: 2rem;
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    max-width: 800px;
+    margin: 0 auto 2rem;
+  }
+  
+  .options {
+    display: grid;
+    gap: 1rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .option {
+    background: var(--surface);
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow);
+    border: 2px solid transparent;
+  }
+  
+  .option:hover:not(.disabled) {
+    transform: translateY(-2px);
+    border-color: var(--primary);
+  }
+  
+  .option:focus {
+    outline: 2px solid var(--primary);
+  }
+  
+  .option.correct {
+    background: #e6f4ea;
+    border-color: var(--correct);
+  }
+  
+  .option.wrong {
+    background: #fce8e6;
+    border-color: var(--wrong);
+  }
+  
+  .disabled {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+  
+  .next-btn {
+    background: var(--primary);
+    color: white;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-weight: 600;
+    margin: 2rem auto 0;
+    display: block;
+    transition: all 0.2s ease;
+  }
+  
+  .action-buttons .next-btn:not(.give-up-btn) {
+    display: none;
+  }
+  
+  .next-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+  }
+  
+  .completed-message {
+    text-align: center;
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  @media (max-width: 768px) {
+    body {
+      padding: 1rem;
+    }
+    
+    .question {
+      font-size: 1.2rem;
+      padding: 1.5rem;
+    }
+    
+    .option {
+      padding: 1rem;
+    }
+  }
+  
+  .action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+  }
+  
+  .give-up-btn {
+    background: var(--wrong);
+    color: white;
+  }
+  
+  .give-up-btn:hover {
+    background: #b71c1c;
+    transform: translateY(-2px);
+  }
+  
+  .score-circle {
+    width: 150px;
+    height: 150px;
+    margin: 2rem auto;
+    position: relative;
+  }
+  
+  .score-circle svg {
+    transform: rotate(-90deg);
+  }
+  
+  .circle-progress {
+    stroke: var(--primary);
+    stroke-linecap: round;
+    transition: all 0.5s ease;
+  }
+  
+  .score-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.5rem;
+    font-weight: 700;
+  }
+  
+  .motivation-text {
+    font-size: 1.5rem;
+    margin: 1rem 0;
+  }
+  
+  .celebrate-emoji {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+  
+  .play-again-btn {
+    background: var(--primary);
+    margin-top: 2rem;
+    display: block !important;
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }

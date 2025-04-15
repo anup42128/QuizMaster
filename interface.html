@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizMaster</title>
+  <link rel="preload" href="quiz.html" as="document" crossorigin="anonymous">
+  <style>
+    :root {
+      --primary-color: #6366f1;
+      --secondary-color: #4f46e5;
+      --text-light: #ffffff;
+      --text-dark: #333333;
+      --transition-timing: 0.3s;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      transition: opacity var(--transition-timing) ease, 
+                  color var(--transition-timing) ease;
+    }
+
+    .loading-bar {
+      height: 4px;
+      width: 0;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+      position: fixed;
+      top: 0;
+      left: 0;
+      animation: loadProgress 1.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      transform-origin: left;
+      z-index: 1000;
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      overflow-x: hidden;
+      touch-action: manipulation;
+      font-display: swap;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      right: -50%;
+      bottom: -50%;
+      background: linear-gradient(45deg, 
+        rgba(99,102,241,0.05) 25%,
+        transparent 25%,
+        transparent 75%,
+        rgba(99,102,241,0.05) 75%
+      );
+      background-size: 100px 100px;
+      animation: bgMove 100s linear infinite;
+      z-index: -1;
+      transform: translateZ(0);
+    }
+
+    body.dark-mode {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: var(--text-light);
+    }
+
+    body.dark-mode::after {
+      background: linear-gradient(45deg, 
+        rgba(99,102,241,0.03) 25%,
+        transparent 25%,
+        transparent 75%,
+        rgba(99,102,241,0.03) 75%
+      );
+    }
+
+    .content-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem 15px;
+      text-align: center;
+      width: 100%;
+    }
+
+    #app-name {
+      font-size: clamp(2.5rem, 8vw, 4rem);
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 1s ease forwards;
+      letter-spacing: -0.05em;
+      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      position: relative;
+    }
+
+    #tagline {
+      font-size: clamp(1rem, 3vw, 1.25rem);
+      font-weight: 400;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 1s ease 0.5s forwards;
+      max-width: 90%;
+      margin: 0 auto 2rem auto;
+      color: #666;
+      line-height: 1.4;
+    }
+
+    body.dark-mode #tagline {
+      color: #a3a3a3;
+    }
+
+    .category-preview {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      max-width: 800px;
+      margin: 0 auto;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 1s ease 0.8s forwards;
+    }
+
+    .category-card {
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 12px;
+      padding: 1.5rem;
+      width: 180px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .category-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .category-card .icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: var(--primary-color);
+    }
+
+    .category-card h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-dark);
+    }
+
+    body.dark-mode .category-card {
+      background: rgba(30, 41, 59, 0.8);
+    }
+
+    body.dark-mode .category-card h3 {
+      color: var(--text-light);
+    }
+
+    .start-button {
+      margin-top: 2rem;
+      padding: 0.8rem 2rem;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 30px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 1s ease 1s forwards;
+      transition: background 0.3s ease, transform 0.3s ease;
+      box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+    }
+
+    .start-button:hover {
+      background: var(--secondary-color);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(99, 102, 241, 0.4);
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--primary-color);
+      cursor: pointer;
+      z-index: 100;
+      opacity: 0;
+      animation: fadeIn 1s ease 1.2s forwards;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+      background-color: rgba(99, 102, 241, 0.1);
+    }
+
+    footer {
+      padding: 1.5rem 1rem calc(1.5rem + env(safe-area-inset-bottom));
+      text-align: center;
+      font-size: 0.875rem;
+      color: #666;
+      width: 100%;
+      background: transparent;
+      border-top: none;
+      backdrop-filter: none;
+      margin-top: auto;
+    }
+
+    .footer-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .credits {
+      font-size: 0.75rem;
+      opacity: 0.9;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+    }
+
+    @keyframes loadProgress {
+      to { width: 100%; }
+    }
+
+    @keyframes bgMove {
+      to { transform: translate(50%, 50%); }
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    @media (max-width: 768px) {
+      footer {
+        padding: 1rem 0.75rem calc(1rem + env(safe-area-inset-bottom));
+        font-size: 0.75rem;
+      }
+      
+      .credits {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+      }
+      
+      .content-wrapper {
+        padding: 1.5rem 10px;
+      }
+
+      .category-preview {
+        gap: 0.75rem;
+      }
+
+      .category-card {
+        width: 140px;
+        padding: 1rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+      .loading-bar { display: none; }
+    }
+
+    body.dark-mode footer {
+      background: transparent;
+      border-top: none;
+      color: rgba(255, 255, 255, 0.8);
+    }
+  </style>
+</head>
+<body>
+  <div class="loading-bar"></div>
+  <button class="theme-toggle" aria-label="Toggle dark mode">🌓</button>
+  <div class="content-wrapper">
+    <h1 id="app-name">QuizMaster</h1>
+    <p id="tagline">Test your knowledge with thousands of questions across multiple categories!</p>
+    
+    <div class="category-preview">
+      <div class="category-card">
+        <div class="icon">🧠</div>
+        <h3>General Knowledge</h3>
+      </div>
+      <div class="category-card">
+        <div class="icon">🔬</div>
+        <h3>Science</h3>
+      </div>
+      <div class="category-card">
+        <div class="icon">🌍</div>
+        <h3>Geography</h3>
+      </div>
+      <div class="category-card">
+        <div class="icon">🎬</div>
+        <h3>Entertainment</h3>
+      </div>
+    </div>
+    
+    <button class="start-button">Start Quiz</button>
+  </div>
+  <footer>
+    <div class="footer-content">
+      <span>© 2025 QuizMaster International</span>
+      <span class="credits">
+        <span>Created by <strong>Anup Rai</strong></span>
+      </span>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      'use strict';
+      
+      let redirectTimeout;
+      let colorSchemeQuery;
+      let colorSchemeHandler;
+      const redirectDelay = 1900;
+
+      function handleThemeToggle() {
+        document.body.classList.toggle('dark-mode');
+        localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+      }
+
+      function handleRedirect() {
+        document.querySelector('.content-wrapper').style.animation = 'fadeOut 0.5s ease forwards';
+        setTimeout(() => window.location.href = 'quiz.html', 500);
+      }
+      
+      function handleColorSchemeChange(e) {
+        // Only follow system preference if user hasn't manually set a preference
+        if (localStorage.getItem('darkMode') === null) {
+          document.body.classList.toggle('dark-mode', e.matches);
+        }
+      }
+
+      function initDarkMode() {
+        // Check localStorage first, then system preference
+        const storedDarkMode = localStorage.getItem('darkMode');
+        if (storedDarkMode !== null) {
+          document.body.classList.toggle('dark-mode', storedDarkMode === 'true');
+        } else {
+          const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.body.classList.toggle('dark-mode', isDark);
+        }
+      }
+
+      function init() {
+        initDarkMode();
+        
+        colorSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        colorSchemeQuery.addEventListener('change', handleColorSchemeChange);
+
+        // Setup event listeners
+        document.querySelector('.theme-toggle').addEventListener('click', handleThemeToggle);
+        document.querySelector('.start-button').addEventListener('click', handleRedirect);
+        
+        // Add hover effects to category cards
+        document.querySelectorAll('.category-card').forEach(card => {
+          card.addEventListener('click', handleRedirect);
+        });
+
+        // Setup timed redirect
+        redirectTimeout = setTimeout(handleRedirect, 8000); // Extended time to let users explore the UI
+      }
+
+      document.addEventListener('DOMContentLoaded', init);
+      
+      window.addEventListener('beforeunload', () => {
+        clearTimeout(redirectTimeout);
+        if(colorSchemeQuery) colorSchemeQuery.removeEventListener('change', handleColorSchemeChange);
+      });
+    })();
+  </script>
+</body>
+</html>

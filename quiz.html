@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizMaster Pro</title>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --secondary: #10b981;
+      --secondary-hover: #059669;
+      --accent: #f97316;
+      --background: #ffffff;
+      --text: #1f2937;
+      --surface: #f8fafc;
+      --border: #e2e8f0;
+      --shadow: rgba(0, 0, 0, 0.05);
+      --error: #dc2626;
+      font-size: clamp(16px, 1.6vw, 18px);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: #0f172a;
+        --text: #f1f5f9;
+        --surface: #1e293b;
+        --border: #334155;
+        --shadow: rgba(255,255,255,0.05);
+        --error: #ef4444;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        transition: none !important;
+        animation: none !important;
+      }
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--background);
+      color: var(--text);
+      min-height: 100vh;
+      font-family: 'Inter', system-ui;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+      line-height: 1.6;
+      overflow-x: hidden;
+      transition: background 0.3s ease, color 0.3s ease;
+      background-image: radial-gradient(rgba(99, 102, 241, 0.1) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    
+    body.dark-mode {
+      --background: #0f172a;
+      --text: #f1f5f9;
+      --surface: #1e293b;
+      --border: #334155;
+      --shadow: rgba(255,255,255,0.05);
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      z-index: 1000;
+      color: var(--primary);
+      background-color: var(--surface);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s ease, background-color 0.3s ease;
+      box-shadow: 0 2px 10px var(--shadow);
+    }
+    
+    .theme-toggle:hover {
+      transform: rotate(30deg);
+    }
+
+    .leaderboard-btn {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+      z-index: 1000;
+      box-shadow: 0 4px 6px var(--shadow);
+      transition: all 0.3s ease;
+    }
+    .leaderboard-btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+    }
+
+    .leaderboard-container {
+      display: grid;
+      max-height: 70vh;
+      overflow-y: auto;
+      gap: 2rem;
+      padding: 0 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+
+    .leaderboard-category {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 8px 12px var(--shadow);
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
+    .leaderboard-category:hover {
+      box-shadow: 0 12px 24px var(--shadow);
+      transform: translateY(-5px);
+    }
+
+    .leaderboard-category h3 {
+      color: var(--primary);
+      margin-bottom: 1rem;
+      font-size: 1.4rem;
+      background: linear-gradient(45deg, var(--primary), var(--primary-hover));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      padding: 0.5rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .leaderboard-entry {
+      display: flex;
+      align-items: center;
+      padding: 1rem;
+      margin: 0.5rem 0;
+      background: var(--surface);
+      border-radius: 8px;
+      gap: 1rem;
+      transition: all 0.3s ease;
+    }
+    .leaderboard-entry:hover {
+      background: var(--primary);
+      color: white;
+      transform: scale(1.03);
+    }
+    
+    .leaderboard-entry:hover .rank {
+      color: white;
+    }
+    
+    .leaderboard-entry:hover .entry-score {
+      background: white;
+      color: var(--primary);
+    }
+
+    .rank {
+      font-weight: bold;
+      min-width: 40px;
+      color: var(--primary);
+      text-align: center;
+      transition: color 0.3s ease;
+    }
+
+    .entry-details {
+      flex: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .entry-score {
+      font-weight: 600;
+      background: var(--primary);
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .no-scores {
+      text-align: center;
+      color: var(--text);
+      opacity: 0.8;
+      padding: 2rem;
+    }
+
+    .progress {
+      width: 100%;
+      max-width: 600px;
+      height: 6px;
+      background: var(--surface);
+      border-radius: 3px;
+      margin: 3rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      border-radius: 3px;
+      transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    .progress-bar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.5) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      animation: shine 1.5s infinite;
+    }
+    
+    @keyframes shine {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    main {
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .section {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      position: absolute;
+      width: 100%;
+      max-width: 600px;
+      padding: 2.5rem;
+      pointer-events: none;
+    }
+    .section.active {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: all;
+      position: relative;
+    }
+
+    h2 {
+      font-size: 2.2rem;
+      margin-bottom: 2.5rem;
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      position: relative;
+    }
+    
+    h2::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      border-radius: 2px;
+    }
+
+    .welcome-message {
+      text-align: center;
+      margin-bottom: 2rem;
+      font-size: 1.1rem;
+      line-height: 1.5;
+      color: var(--text);
+      opacity: 0.9;
+    }
+    
+    .avatar-selection {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .avatar-option {
+      width: 50px;
+      height: 50px;
+      font-size: 1.75rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      background: var(--surface);
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 5px var(--shadow);
+      border: 2px solid transparent;
+    }
+    
+    .avatar-option:hover {
+      transform: scale(1.1);
+    }
+    
+    .avatar-option.selected {
+      border-color: var(--primary);
+      transform: scale(1.1);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.3);
+    }
+    
+    .username-input {
+      width: 100%;
+      padding: 1rem;
+      margin: 0 0 2rem;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 1.1rem;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+    }
+    .username-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--shadow);
+      transform: translateY(-2px);
+    }
+
+    .search-bar {
+      width: 100%;
+      padding: 1rem;
+      margin: 0 0 2rem;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 1.1rem;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .search-bar:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--shadow);
+    }
+
+    .options-grid {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      margin: 2rem 0;
+    }
+
+    .option-btn {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      color: var(--text);
+      padding: 1.8rem;
+      border-radius: 16px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.3s ease;
+      font-size: 1.1rem;
+      font-weight: 500;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .option-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      opacity: 0;
+      z-index: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .option-btn > * {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .option-btn:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px var(--shadow);
+    }
+    
+    .option-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      transform: scale(1.02);
+    }
+    
+    .option-btn.active::before {
+      opacity: 1;
+    }
+    
+    .option-btn.active .topic-icon,
+    .option-btn.active .topic-name,
+    .option-btn.active .topic-description {
+      color: white;
+    }
+    
+    .option-btn.hidden {
+      display: none;
+    }
+    
+    .topic-icon {
+      font-size: 2rem;
+      margin-bottom: 0.25rem;
+      transition: transform 0.3s ease;
+    }
+    
+    .option-btn:hover .topic-icon {
+      transform: scale(1.2);
+    }
+    
+    .topic-name {
+      font-weight: 600;
+      font-size: 1.2rem;
+    }
+    
+    .topic-description {
+      font-size: 0.9rem;
+      opacity: 0.75;
+      font-weight: normal;
+    }
+    
+    .search-container {
+      position: relative;
+      margin-bottom: 2rem;
+    }
+    
+    .search-icon {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--primary);
+      pointer-events: none;
+    }
+
+    .section-description {
+      text-align: center;
+      margin: -1.5rem auto 2rem;
+      opacity: 0.8;
+      max-width: 500px;
+    }
+    
+    .timer-options {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin: 2rem 0;
+      flex-wrap: wrap;
+    }
+    
+    .timer-option {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      width: 140px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .timer-option::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      opacity: 0;
+      z-index: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .timer-option > * {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .timer-option:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px var(--shadow);
+    }
+    
+    .timer-option.selected {
+      border-color: var(--primary);
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px var(--shadow);
+    }
+    
+    .timer-option.selected::before {
+      opacity: 1;
+    }
+    
+    .timer-option.selected .timer-icon,
+    .timer-option.selected .timer-value,
+    .timer-option.selected .timer-label,
+    .timer-option.selected .timer-description {
+      color: white;
+    }
+    
+    .timer-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .timer-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    
+    .timer-label {
+      font-size: 0.9rem;
+      opacity: 0.7;
+      margin-bottom: 0.5rem;
+    }
+    
+    .timer-description {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    
+    .level-options {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin: 2rem 0;
+      flex-wrap: wrap;
+    }
+    
+    .level-option {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      width: 180px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .level-option:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px var(--shadow);
+    }
+    
+    .level-option.selected {
+      border-color: var(--primary);
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px var(--shadow);
+    }
+    
+    .level-banner {
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      color: white;
+      width: 100%;
+      padding: 0.5rem;
+      font-weight: 600;
+    }
+    
+    .level-icon {
+      font-size: 3rem;
+      margin: 1rem 0;
+    }
+    
+    .level-details {
+      padding: 0 1rem 1.5rem;
+    }
+    
+    .level-feature {
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+      opacity: 0.8;
+    }
+    
+    .level-option.selected .level-banner {
+      background: linear-gradient(90deg, var(--secondary), var(--primary));
+    }
+    
+    .nav-buttons {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 3rem;
+      justify-content: space-between;
+    }
+
+    .nav-btn {
+      padding: 1.2rem 2rem;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      flex: 1;
+      max-width: 200px;
+      font-size: 1.1rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .nav-btn::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      background: linear-gradient(rgba(255,255,255,0.1), rgba(255,255,255,0));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .nav-btn:hover::after {
+      opacity: 1;
+    }
+
+    .next-btn {
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      color: white;
+      background-size: 200% 100%;
+      background-position: 100% 0;
+      transition: all 0.3s ease, background-position 0.5s ease;
+    }
+    .next-btn:hover {
+      background-position: 0 0;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
+    }
+
+    .back-btn {
+      background: var(--surface);
+      color: var(--text);
+      border: 2px solid var(--border);
+    }
+    .back-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px var(--shadow);
+    }
+
+    .error-message {
+      color: var(--error);
+      text-align: center;
+      margin-top: 1rem;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+      background-color: rgba(220, 38, 38, 0.1);
+      padding: 0.75rem;
+      border-radius: 8px;
+      font-weight: 500;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .error-message::before {
+      content: '⚠️';
+      margin-right: 0.5rem;
+    }
+    
+    .error-visible {
+      opacity: 1;
+      transform: translateY(0);
+      animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-1px, 0, 0); }
+      20%, 80% { transform: translate3d(2px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+      40%, 60% { transform: translate3d(4px, 0, 0); }
+    }
+
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--background);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      z-index: 1000;
+      background-image: radial-gradient(rgba(99, 102, 241, 0.15) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .loading-screen.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .loading-content {
+      text-align: center;
+      transform: scale(0.9);
+      opacity: 0;
+      transition: all 0.4s ease;
+      max-width: 90%;
+    }
+    .loading-screen.active .loading-content {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    .loading-text {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      font-weight: 700;
+    }
+    
+    .brain-icon {
+      animation: float 3s ease-in-out infinite;
+      display: inline-block;
+    }
+    
+    .rocket-icon {
+      animation: rocket 3s ease-in-out infinite;
+      display: inline-block;
+    }
+    
+    .loading-message {
+      margin-bottom: 1.5rem;
+      font-size: 1.1rem;
+      color: var(--text);
+      opacity: 0.8;
+    }
+
+    .loading-bar {
+      width: 300px;
+      height: 6px;
+      background: var(--surface);
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 0 auto 2rem;
+      box-shadow: 0 2px 10px var(--shadow);
+    }
+
+    .loading-progress {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      transition: width 2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+    }
+    
+    .loading-progress::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.5) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      animation: shine 1.5s infinite;
+      background-size: 200% 100%;
+    }
+    
+    .loading-facts {
+      font-style: italic;
+      opacity: 0.7;
+      font-size: 0.9rem;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    @keyframes rocket {
+      0% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(10deg); }
+      100% { transform: translateY(0) rotate(0deg); }
+    }
+    
+    @keyframes shine {
+      to { background-position: 200% 0; }
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    @media (max-width: 768px) {
+      :root {
+        font-size: 16px;
+      }
+      h2 {
+        font-size: 1.8rem;
+      }
+      .section {
+        padding: 1.5rem;
+      }
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+      .option-btn {
+        min-height: 80px;
+        padding: 1.5rem;
+      }
+      .nav-btn {
+        max-width: none;
+        width: 100%;
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="progress">
+    <div class="progress-bar" style="width: 25%"></div>
+  </div>
+
+  <button class="theme-toggle" aria-label="Toggle dark mode">🌓</button>
+
+  <main role="main">
+    <div class="section active" id="usernameSection">
+      <h2>Welcome to QuizMaster</h2>
+      <p class="welcome-message">Get ready to challenge yourself with fun quizzes! Compete with others and test your knowledge across various subjects.</p>
+      
+      <div class="avatar-selection">
+        <div class="avatar-option" data-avatar="🧠">🧠</div>
+        <div class="avatar-option" data-avatar="🦸">🦸</div>
+        <div class="avatar-option" data-avatar="🦊">🦊</div>
+        <div class="avatar-option" data-avatar="🐼">🐼</div>
+        <div class="avatar-option" data-avatar="🦉">🦉</div>
+        <div class="avatar-option" data-avatar="🐱">🐱</div>
+        <div class="avatar-option" data-avatar="🐬">🐬</div>
+        <div class="avatar-option" data-avatar="🦁">🦁</div>
+      </div>
+      
+      <input type="text" id="username" class="username-input" placeholder="Your Username" aria-label="Enter your username" maxlength="20">
+      <div class="nav-buttons">
+        <button class="nav-btn next-btn" onclick="validateUsername()">Start Your Journey →</button>
+      </div>
+      <p class="error-message" id="usernameError" role="alert">Please enter a username to continue</p>
+    </div>
+
+    <button class="leaderboard-btn" onclick="showLeaderboard()">🏆 Leaderboard</button>
+    <div class="section" id="leaderboardSection">
+      <h2>Top Performers</h2>
+      <select id="topicFilter" onchange="filterLeaderboard()">
+        <option value="">All Topics</option>
+        <option value="physics">Physics</option>
+        <option value="chemistry">Chemistry</option>
+        <option value="biology">Biology</option>
+        <option value="history">History</option>
+        <option value="geography">Geography</option>
+      </select>
+      <div class="leaderboard-container" id="leaderboardContainer"></div>
+      <div class="nav-buttons">
+        <button class="nav-btn back-btn" onclick="returnToMain()">← Back</button>
+      </div>
+    </div>  
+
+    <div class="section" id="topicSection">
+      <h2>Choose Your Expertise</h2>
+      <div class="search-container">
+        <input type="text" id="topicSearch" class="search-bar" placeholder="Search topics..." aria-label="Search topics">
+        <div class="search-icon">🔍</div>
+      </div>
+      
+      <div class="options-grid">
+        <button class="option-btn" data-topic="physics">
+          <div class="topic-icon">⚛</div>
+          <div class="topic-name">Physics</div>
+          <div class="topic-description">Explore forces, energy & motion</div>
+        </button>
+        <button class="option-btn" data-topic="chemistry">
+          <div class="topic-icon">⚗</div>
+          <div class="topic-name">Chemistry</div>
+          <div class="topic-description">Atoms, elements & reactions</div>
+        </button>
+        <button class="option-btn" data-topic="biology">
+          <div class="topic-icon">🧬</div>
+          <div class="topic-name">Biology</div>
+          <div class="topic-description">Life, organisms & ecosystems</div>
+        </button>
+        <button class="option-btn" data-topic="history">
+          <div class="topic-icon">🏛️</div>
+          <div class="topic-name">History</div>
+          <div class="topic-description">Past events & civilizations</div>
+        </button>
+        <button class="option-btn" data-topic="geography">
+          <div class="topic-icon">🌍</div>
+          <div class="topic-name">Geography</div>
+          <div class="topic-description">Earth, places & cultures</div>
+        </button>
+        <button class="option-btn" data-topic="literature">
+          <div class="topic-icon">📚</div>
+          <div class="topic-name">Literature</div>
+          <div class="topic-description">Books, authors & literary works</div>
+        </button>
+      </div>
+      <p class="error-message" id="topicError" role="alert">Please select a topic to continue</p>
+    </div>
+
+    <div class="section" id="timerSection">
+      <h2>Set Your Pace</h2>
+      <p class="section-description">Choose how much time you want for each question.</p>
+      
+      <div class="timer-options">
+        <div class="timer-option" data-time="15">
+          <div class="timer-icon">⚡</div>
+          <div class="timer-value">15</div>
+          <div class="timer-label">seconds</div>
+          <div class="timer-description">Lightning Fast</div>
+        </div>
+        <div class="timer-option" data-time="30">
+          <div class="timer-icon">⏱️</div>
+          <div class="timer-value">30</div>
+          <div class="timer-label">seconds</div>
+          <div class="timer-description">Balanced</div>
+        </div>
+        <div class="timer-option" data-time="60">
+          <div class="timer-icon">⌛</div>
+          <div class="timer-value">60</div>
+          <div class="timer-label">seconds</div>
+          <div class="timer-description">Take Your Time</div>
+        </div>
+      </div>
+      
+      <div class="nav-buttons">
+        <button class="nav-btn back-btn" onclick="showPreviousSection()">← Back</button>
+        <button class="nav-btn next-btn" onclick="showNextSection()">Next →</button>
+      </div>
+    </div>
+
+    <div class="section" id="levelSection">
+      <h2>Choose Challenge Level</h2>
+      <p class="section-description">Select the difficulty that matches your expertise.</p>
+      
+      <div class="level-options">
+        <div class="level-option" data-level="easy">
+          <div class="level-banner">Beginner</div>
+          <div class="level-icon">😊</div>
+          <div class="level-details">
+            <div class="level-feature">Basic concepts</div>
+            <div class="level-feature">Simple questions</div>
+            <div class="level-feature">Great for learning</div>
+          </div>
+        </div>
+        <div class="level-option" data-level="medium">
+          <div class="level-banner">Intermediate</div>
+          <div class="level-icon">🤔</div>
+          <div class="level-details">
+            <div class="level-feature">Advanced topics</div>
+            <div class="level-feature">Challenging questions</div>
+            <div class="level-feature">Test your knowledge</div>
+          </div>
+        </div>
+        <div class="level-option" data-level="hard">
+          <div class="level-banner">Expert</div>
+          <div class="level-icon">🧠</div>
+          <div class="level-details">
+            <div class="level-feature">Complex concepts</div>
+            <div class="level-feature">Tricky questions</div>
+            <div class="level-feature">For true masters</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="nav-buttons">
+        <button class="nav-btn back-btn" onclick="showPreviousSection()">← Back</button>
+        <button class="nav-btn next-btn" onclick="startQuiz()">Start Quiz 🚀</button>
+      </div>
+      <p class="error-message" id="levelError" role="alert">Please select a difficulty level</p>
+    </div>
+  </main>
+
+  <div class="loading-screen">
+    <div class="loading-content">
+      <div class="loading-text">
+        <span class="brain-icon">🧠</span> QuizMaster <span class="rocket-icon">🚀</span>
+      </div>
+      <div class="loading-message">Getting your amazing quiz ready...</div>
+      <div class="loading-bar">
+        <div class="loading-progress"></div>
+      </div>
+      <div class="loading-facts">
+        <p class="loading-fact">Did you know? The human brain has about 86 billion neurons!</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    'use strict';
+
+    const config = {
+      username: null,
+      avatar: null,
+      topic: null,
+      level: null,
+      timeLimit: 30
+    };
+
+    let currentSection = 0;
+    const sections = ['usernameSection', 'topicSection', 'timerSection', 'levelSection'];
+    let leaderboardInterval = null;
+    let isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    // Theme toggle functionality
+    function toggleDarkMode() {
+      isDarkMode = !isDarkMode;
+      document.body.classList.toggle('dark-mode', isDarkMode);
+      localStorage.setItem('darkMode', isDarkMode);
+    }
+    
+    // Initialize dark mode from localStorage or system preference
+    function initDarkMode() {
+      const storedMode = localStorage.getItem('darkMode');
+      if (storedMode !== null) {
+        isDarkMode = storedMode === 'true';
+      } else {
+        isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+      document.body.classList.toggle('dark-mode', isDarkMode);
+      
+      // Add event listener for system color scheme changes
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', handleColorSchemeChange);
+      }
+    }
+    
+    // Handle avatar selection
+    function selectAvatar(avatarElement) {
+      document.querySelectorAll('.avatar-option').forEach(el => {
+        el.classList.remove('selected');
+      });
+      avatarElement.classList.add('selected');
+      config.avatar = avatarElement.dataset.avatar;
+      
+      // Add a little animation
+      avatarElement.style.animation = 'pulse 0.5s';
+      setTimeout(() => {
+        avatarElement.style.animation = '';
+      }, 500);
+    }
+
+    // Function to handle color scheme changes
+    function handleColorSchemeChange(e) {
+      // Only follow system preference if user hasn't manually set a preference
+      if (localStorage.getItem('darkMode') === null) {
+        isDarkMode = e.matches;
+        document.body.classList.toggle('dark-mode', isDarkMode);
+      }
+    }
+
+    function validateUsername() {
+      const usernameInput = document.getElementById('username');
+      const username = usernameInput.value.trim();
+      if (!username) {
+        showError('usernameError');
+        usernameInput.focus();
+        return;
+      }
+      config.username = username;
+      showNextSection();
+    }
+
+    function debounce(func, wait) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
+    function showLeaderboard() {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById('leaderboardSection').classList.add('active');
+      loadLeaderboard();
+      if (leaderboardInterval) clearInterval(leaderboardInterval);
+      leaderboardInterval = setInterval(() => loadLeaderboard(document.getElementById('topicFilter').value), 30000);
+    }
+
+    function returnToMain() {
+      if (leaderboardInterval) clearInterval(leaderboardInterval);
+      currentSection = 0;
+      updateProgress();
+      transitionToSection(sections[currentSection]);
+    }
+
+    function loadLeaderboard(selectedTopic = '') {
+      const container = document.getElementById('leaderboardContainer');
+      container.innerHTML = '';
+
+      const leaderboards = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.includes('_leaderboard')) {
+          const [topic, level] = key.replace('_leaderboard', '').split('_');
+          if (selectedTopic && topic !== selectedTopic) continue;
+          const entries = JSON.parse(localStorage.getItem(key)) || [];
+
+          if (!leaderboards[`${topic}_${level}`]) {
+            leaderboards[`${topic}_${level}`] = {
+              topic,
+              level,
+              entries: entries.slice(0, 5)
+            };
+          }
+        }
+      }
+
+      if (Object.keys(leaderboards).length === 0 && !selectedTopic) {
+        container.innerHTML = '<div class="no-scores">No scores recorded yet. Be the first!</div>';
+        return;
+      }
+
+      const sortedCategories = Object.values(leaderboards).sort((a, b) => {
+        if (a.topic === b.topic) return a.level.localeCompare(b.level);
+        return a.topic.localeCompare(b.topic);
+      });
+
+      sortedCategories.forEach(({ topic, level, entries }) => {
+        const section = document.createElement('div');
+        section.className = 'leaderboard-category';
+        section.innerHTML = `
+          <h3>${topic.charAt(0).toUpperCase() + topic.slice(1)} - ${level.charAt(0).toUpperCase() + level.slice(1)}</h3>
+          ${entries.length > 0 ? 
+            entries.map((entry, index) => `
+              <div class="leaderboard-entry">
+                <span class="rank">#${index + 1}</span>
+                <div class="entry-details">
+                  <span>${entry.avatar || ''} ${entry.username}</span>
+                  <span class="entry-score">${entry.score}%</span>
+                </div>
+              </div>
+            `).join('') :
+            '<div class="no-scores">No scores yet for this category</div>'
+          }
+        `;
+        container.appendChild(section);
+      });
+
+      if (!selectedTopic) {
+        if (Object.keys(leaderboards).length === 0) {
+          container.innerHTML = '<div class="no-scores">No scores recorded yet. Start playing to appear here!</div>';
+        }
+      } else {
+        if (Object.keys(leaderboards).length === 0) {
+          container.innerHTML = `<div class="no-scores">No scores recorded for ${selectedTopic}. Start playing to appear here!</div>`;
+        }
+      }
+    }
+
+    const topicSearchInput = document.getElementById('topicSearch');
+    topicSearchInput.addEventListener('input', debounce(function(e) {
+      const searchTerm = e.target.value.toLowerCase();
+      const topics = document.querySelectorAll('.option-btn[data-topic]');
+      topics.forEach(topic => {
+        const text = topic.textContent.toLowerCase();
+        topic.classList.toggle('hidden', !text.includes(searchTerm));
+      });
+    }, 300));
+
+    function showNextSection() {
+      if (!validateCurrentSection()) return;
+      currentSection = Math.min(currentSection + 1, sections.length - 1);
+      updateProgress();
+      transitionToSection(sections[currentSection]);
+    }
+
+    function showPreviousSection() {
+      currentSection = Math.max(currentSection - 1, 0);
+      updateProgress();
+      transitionToSection(sections[currentSection]);
+    }
+
+    function transitionToSection(sectionId) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      requestAnimationFrame(() => {
+        document.getElementById(sectionId).classList.add('active');
+      });
+    }
+
+    function validateCurrentSection() {
+      const sectionId = sections[currentSection];
+      let isValid = true;
+      if (sectionId === 'usernameSection' && !config.username) {
+        showError('usernameError');
+        isValid = false;
+      } else if (sectionId === 'topicSection' && !config.topic) {
+        showError('topicError');
+        isValid = false;
+      } else if (sectionId === 'levelSection' && !config.level) {
+        showError('levelError');
+        isValid = false;
+      }
+      return isValid;
+    }
+
+    function showError(elementId) {
+      const errorElement = document.getElementById(elementId);
+      errorElement.classList.add('error-visible');
+      setTimeout(() => errorElement.classList.remove('error-visible'), 3000);
+    }
+
+    function updateProgress() {
+      const progress = ((currentSection + 1) / sections.length) * 100;
+      document.querySelector('.progress-bar').style.width = `${progress}%`;
+    }
+
+    function selectTimerOption(option) {
+      document.querySelectorAll('.timer-option').forEach(el => {
+        el.classList.remove('selected');
+      });
+      option.classList.add('selected');
+      config.timeLimit = parseInt(option.dataset.time);
+    }
+    
+    function selectLevelOption(option) {
+      document.querySelectorAll('.level-option').forEach(el => {
+        el.classList.remove('selected');
+      });
+      option.classList.add('selected');
+      config.level = option.dataset.level;
+    }
+
+    function startQuiz() {
+      if (!validateCurrentSection()) return;
+      const loadingScreen = document.querySelector('.loading-screen');
+      const loadingProgress = document.querySelector('.loading-progress');
+      const loadingFact = document.querySelector('.loading-fact');
+      
+      // List of interesting facts to show during loading
+      const facts = [
+        "The human brain has about 86 billion neurons!",
+        "A day on Venus is longer than a year on Venus.",
+        "The first computer programmer was a woman named Ada Lovelace.",
+        "Octopuses have three hearts and blue blood.",
+        "The Eiffel Tower can be 15 cm taller during the summer due to thermal expansion.",
+        "Honey never spoils. Archaeologists have found pots of honey in ancient Egyptian tombs that are over 3,000 years old.",
+        "The shortest war in history was between Britain and Zanzibar in 1896. It lasted only 38 minutes.",
+        "An ostrich's eye is bigger than its brain.",
+        "The Great Wall of China is not visible from space with the naked eye.",
+        "The world's oldest known living tree is over 5,000 years old."
+      ];
+      
+      // Show a random fact
+      loadingFact.textContent = facts[Math.floor(Math.random() * facts.length)];
+      
+      loadingScreen.classList.add('active');
+      loadingProgress.style.width = '100%';
+      
+      // Show different facts every 1.5 seconds
+      let factIndex = 0;
+      const factInterval = setInterval(() => {
+        factIndex = (factIndex + 1) % facts.length;
+        loadingFact.style.opacity = 0;
+        
+        setTimeout(() => {
+          loadingFact.textContent = facts[factIndex];
+          loadingFact.style.opacity = 1;
+        }, 500);
+      }, 3000);
+      
+      setTimeout(() => {
+        clearInterval(factInterval);
+        window.location.href = `play.html?username=${encodeURIComponent(config.username)}&topic=${config.topic}&level=${config.level}&time=${config.timeLimit}${config.avatar ? `&avatar=${encodeURIComponent(config.avatar)}` : ''}`;
+      }, 4000);
+    }
+
+    function addEventListeners() {
+      // Theme toggle
+      document.querySelector('.theme-toggle').addEventListener('click', toggleDarkMode);
+      
+      // Avatar selection
+      document.querySelectorAll('.avatar-option').forEach(option => {
+        option.addEventListener('click', () => selectAvatar(option));
+      });
+      
+      // Topic buttons
+      document.querySelectorAll('.option-btn[data-topic]').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.option-btn[data-topic]').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          config.topic = this.dataset.topic;
+          
+          // Add animation effect
+          this.style.animation = 'pulse 0.5s';
+          setTimeout(() => {
+            this.style.animation = '';
+            showNextSection();
+          }, 300);
+        });
+      });
+      
+      // Timer options
+      document.querySelectorAll('.timer-option').forEach(option => {
+        option.addEventListener('click', function() {
+          selectTimerOption(this);
+        });
+      });
+      
+      // Level options
+      document.querySelectorAll('.level-option').forEach(option => {
+        option.addEventListener('click', function() {
+          selectLevelOption(this);
+        });
+      });
+    }
+
+    function init() {
+      initDarkMode();
+      addEventListeners();
+      
+      // Select the first avatar by default
+      const firstAvatar = document.querySelector('.avatar-option');
+      if (firstAvatar) selectAvatar(firstAvatar);
+      
+      // Select the middle (30s) timer by default
+      const defaultTimer = document.querySelector('.timer-option[data-time="30"]');
+      if (defaultTimer) selectTimerOption(defaultTimer);
+    }
+    
+    document.addEventListener('DOMContentLoaded', init);
+
+    let touchstartX = 0;
+    let touchendX = 0;
+    const minSwipeDistance = 50;
+
+    function handleTouchStart(e) {
+      touchstartX = e.changedTouches[0].screenX;
+    }
+
+    function handleTouchEnd(e) {
+      touchendX = e.changedTouches[0].screenX;
+      const swipeDistance = touchendX - touchstartX;
+      if (Math.abs(swipeDistance) > minSwipeDistance) {
+        swipeDistance > 0 ? showPreviousSection() : showNextSection();
+      }
+    }
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(registration => {
+            console.log('ServiceWorker registered:', registration);
+          })
+          .catch(error => {
+            console.log('ServiceWorker registration failed:', error);
+          });
+      });
+    }
+
+    window.addEventListener('resize', () => {
+      cancelAnimationFrame(window.resizeFrame);
+      window.resizeFrame = requestAnimationFrame(() => {
+        // Handle responsive layout changes
+      });
+    });
+
+    function filterLeaderboard() {
+      const selectedTopic = document.getElementById('topicFilter').value;
+      loadLeaderboard(selectedTopic);
+    }
+
+    // Add cleanup for event listeners
+    window.addEventListener('beforeunload', () => {
+      if (leaderboardInterval) clearInterval(leaderboardInterval);
+      
+      // Clean up media query listener
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleColorSchemeChange);
+      }
+      
+      // Clean up touch events
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
+    });
+  </script>
+</body>
+</html>

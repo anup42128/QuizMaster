@@ -1,0 +1,185 @@
+:root {
+    --primary-color: #007BFF;
+    --text-light: #ffffff;
+    --text-dark: #333333;
+    --transition-timing: 0.3s;
+  }
+  
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    transition: opacity var(--transition-timing) ease, 
+                color var(--transition-timing) ease;
+  }
+  
+  .loading-bar {
+    height: 3px;
+    width: 0;
+    background: var(--primary-color);
+    position: fixed;
+    top: 0;
+    left: 0;
+    animation: loadProgress 1.9s linear forwards;
+    transform-origin: left;
+    z-index: 1000;
+  }
+  
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    overflow-x: hidden;
+    touch-action: manipulation;
+    font-display: swap;
+  }
+  
+  body::after {
+    content: "";
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    right: -50%;
+    bottom: -50%;
+    background: linear-gradient(45deg, 
+      rgba(0,123,255,0.05) 25%,
+      transparent 25%,
+      transparent 75%,
+      rgba(0,123,255,0.05) 75%
+    );
+    background-size: 100px 100px;
+    animation: bgMove 100s linear infinite;
+    z-index: -1;
+    transform: translateZ(0);
+  }
+  
+  body.dark-mode {
+    background: linear-gradient(135deg, #2d3436 0%, #000000 100%);
+    color: var(--text-light);
+  }
+  
+  body.dark-mode::after {
+    background: linear-gradient(45deg, 
+      rgba(0,123,255,0.03) 25%,
+      transparent 25%,
+      transparent 75%,
+      rgba(0,123,255,0.03) 75%
+    );
+  }
+  
+  .content-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem 15px;
+    text-align: center;
+    width: 100%;
+  }
+  
+  #app-name {
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 1s ease forwards;
+    letter-spacing: -0.05em;
+  }
+  
+  #tagline {
+    font-size: clamp(1rem, 3vw, 1.25rem);
+    font-weight: 400;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 1s ease 0.5s forwards;
+    max-width: 90%;
+    margin: 0 auto;
+    color: #666;
+    line-height: 1.4;
+  }
+  
+  footer {
+    padding: 1.5rem 1rem calc(1.5rem + env(safe-area-inset-bottom));
+    text-align: center;
+    font-size: 0.875rem;
+    color: #666;
+    width: 100%;
+    background: transparent;
+    border-top: none;
+    backdrop-filter: none;
+    margin-top: auto;
+  }
+  
+  .footer-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .credits {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes fadeOut {
+    to {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+  }
+  
+  @keyframes loadProgress {
+    to { width: 100%; }
+  }
+  
+  @keyframes bgMove {
+    to { transform: translate(50%, 50%); }
+  }
+  
+  @media (max-width: 768px) {
+    footer {
+      padding: 1rem 0.75rem calc(1rem + env(safe-area-inset-bottom));
+      font-size: 0.75rem;
+    }
+    
+    .credits {
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    
+    .content-wrapper {
+      padding: 1.5rem 10px;
+    }
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation: none !important;
+      transition: none !important;
+    }
+    .loading-bar { display: none; }
+  }
+  
+  body.dark-mode footer {
+    background: transparent;
+    border-top: none;
+    color: rgba(255, 255, 255, 0.8);
+  }
